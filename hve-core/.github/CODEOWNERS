@@ -1,0 +1,26 @@
+# CODEOWNERS
+# 
+# This file defines code ownership for the hve-core repository.
+# Code owners are automatically requested for review when someone opens a pull request
+# that modifies files they own.
+#
+# Syntax: <file-pattern> @owner1 @owner2
+# More info: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files (fallback)
+* @microsoft/edge-ai-core-dev
+
+# Self-protection: CODEOWNERS file changes require core team approval
+/.github/CODEOWNERS @microsoft/edge-ai-core-dev
+
+# GitHub configuration (workflows, templates, instructions)
+/.github/ @microsoft/edge-ai-core-dev
+
+# Automation Scripts
+/scripts/ @microsoft/edge-ai-core-dev
+
+# VS Code Extension
+/extension/ @microsoft/edge-ai-core-dev
+
+# Documentation
+/docs/ @microsoft/edge-ai-core-dev

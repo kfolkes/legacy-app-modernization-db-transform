@@ -1,0 +1,149 @@
+name: Build and Release Wheels
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
+
+      - name: Resolve semantic version from application
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          VERSION=$(python - << 'PY'
+          import tomllib
+          from pathlib import Path
+
+          core_pyproject = Path("core/pyproject.toml")
+          cli_pyproject = Path("cli/pyproject.toml")
+
+          core_data = tomllib.loads(core_pyproject.read_text(encoding="utf-8"))
+          cli_data = tomllib.loads(cli_pyproject.read_text(encoding="utf-8"))
+
+          core_version = core_data["project"]["version"]
+          cli_version = cli_data["project"]["version"]
+
+          if core_version != cli_version:
+              raise SystemExit(
+                  f"Version mismatch: core={core_version}, cli={cli_version}. "
+                  "Keep both versions identical before releasing."
+              )
+
+          print(core_version)
+          PY
+          )
+
+          TAG="v${VERSION}"
+
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Resolved release version: ${VERSION}"
+
+      - name: Validate pushed tag matches application version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          set -euo pipefail
+          CURRENT_TAG="${GITHUB_REF_NAME}"
+          EXPECTED_TAG="${{ steps.version.outputs.tag }}"
+
+          if [[ "$CURRENT_TAG" != "$EXPECTED_TAG" ]]; then
+            echo "Tag/version mismatch."
+            echo "Tag from git ref: $CURRENT_TAG"
+            echo "Expected from pyproject: $EXPECTED_TAG"
+            exit 1
+          fi
+
+      - name: Build wheel packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf dist
+          mkdir -p dist
+
+          python -m build --wheel --outdir dist core
+          python -m build --wheel --outdir dist cli
+
+          echo "Built wheel files:"
+          ls -1 dist/*.whl
+
+      - name: Build Copilot assets package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          PACKAGE_ROOT="packaging/copilot-assets"
+          ARCHIVE_BASE="dist/agentsec-copilot-assets-${{ steps.version.outputs.version }}"
+
+          rm -rf "$PACKAGE_ROOT"
+          mkdir -p "$PACKAGE_ROOT/.github"
+
+          # Include prompts matching sck.* while preserving .github structure.
+          find .github/prompts -type f -name 'sck.*' -exec cp --parents {} "$PACKAGE_ROOT" \;
+
+          # Include agent definitions matching sck.* while preserving .github structure.
+          find .github/agents -type f -name 'sck.*' -exec cp --parents {} "$PACKAGE_ROOT" \;
+
+          # Include full skills directory content.
+          cp -R .github/skills "$PACKAGE_ROOT/.github/"
+
+          # Include the Copilot setup workflow only.
+          cp --parents .github/workflows/copilot-setup-steps.yml "$PACKAGE_ROOT"
+
+          # Create both archive formats with .github as the top-level folder.
+          tar -czf "${ARCHIVE_BASE}.tar.gz" -C "$PACKAGE_ROOT" .github
+          (
+            cd "$PACKAGE_ROOT"
+            zip -r "../../${ARCHIVE_BASE}.zip" .github
+          )
+
+          echo "Built Copilot asset archives:"
+          ls -1 "${ARCHIVE_BASE}.tar.gz" "${ARCHIVE_BASE}.zip"
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentsec-wheels-${{ steps.version.outputs.version }}
+          path: dist/*.whl
+
+      - name: Upload Copilot assets archives
+        uses: actions/upload-artifact@v4
+        with:
+          name: agentsec-copilot-assets-${{ steps.version.outputs.version }}
+          path: |
+            dist/agentsec-copilot-assets-${{ steps.version.outputs.version }}.zip
+            dist/agentsec-copilot-assets-${{ steps.version.outputs.version }}.tar.gz
+
+      - name: Create GitHub release and upload wheels
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: AgentSec v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/*.whl
+            dist/agentsec-copilot-assets-${{ steps.version.outputs.version }}.zip
+            dist/agentsec-copilot-assets-${{ steps.version.outputs.version }}.tar.gz

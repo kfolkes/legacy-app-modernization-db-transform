@@ -1,0 +1,73 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "appimage": {
+        "type": "string"
+      },
+      "groupname": {
+        "type": "string"
+      },
+      "constr": {
+        "type": "string"
+      },
+      "usemock": {
+        "type": "string"
+      }
+    },
+    "variables": {
+      "container1name": "mainapp",
+      "container1image": "[parameters('appimage')]"
+    },
+    "resources": [
+      {
+        "name": "[parameters('groupname')]",
+        "type": "Microsoft.ContainerInstance/containerGroups",
+        "apiVersion": "2018-04-01",
+        "location": "[resourceGroup().location]",
+        "properties": {
+          "containers": [
+            {
+              "name": "[variables('container1name')]",
+              "properties": {
+                "image": "[variables('container1image')]",
+                "environmentVariables": 
+                [
+                  { "name": "UseMockData", "value":"[parameters('usemock')]" },
+                  { "name": "ConnectionString", "value":"[parameters('constr')]"},
+                  { "name": "UseAzureActiveDirectory", "value": "false"}
+                ],
+                "resources": {
+                  "requests": {
+                    "cpu": 1,
+                    "memoryInGb": 1.5
+                  }
+                },
+                "ports": [
+                  {
+                    "port": 80
+                  }
+                ]
+              }
+            }
+          ],
+          "osType": "Windows",
+          "ipAddress": {
+            "type": "Public",
+            "ports": [
+              {
+                "protocol": "tcp",
+                "port": "80"
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "outputs": {
+      "containerIPv4Address": {
+        "type": "string",
+        "value": "[reference(resourceId('Microsoft.ContainerInstance/containerGroups/', parameters('groupname'))).ipAddress.ip]"
+      }
+    }
+  }

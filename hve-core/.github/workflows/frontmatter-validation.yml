@@ -1,0 +1,97 @@
+name: Frontmatter Validation
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on frontmatter validation errors'
+        required: false
+        type: boolean
+        default: false
+      changed-files-only:
+        description: 'Only validate changed markdown files'
+        required: false
+        type: boolean
+        default: true
+      skip-footer-validation:
+        description: 'Skip Copilot footer validation'
+        required: false
+        type: boolean
+        default: false
+      warnings-as-errors:
+        description: 'Treat warnings as errors'
+        required: false
+        type: boolean
+        default: true
+      footer-exclude-paths:
+        description: 'Comma-separated list of file patterns to exclude from footer validation (overrides script defaults)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  frontmatter-validation:
+    name: Validate Markdown Frontmatter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Create logs directory
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path logs | Out-Null
+
+      - name: Install PowerShell-Yaml
+        shell: pwsh
+        run: |
+          Install-Module -Name PowerShell-Yaml -Force -Scope CurrentUser
+
+      - name: Run Frontmatter Validation
+        shell: pwsh
+        run: |
+          $params = @{}
+          
+          if ('${{ inputs.changed-files-only }}' -eq 'true') {
+            $params['ChangedFilesOnly'] = $true
+          }
+          if ('${{ inputs.skip-footer-validation }}' -eq 'true') {
+            $params['SkipFooterValidation'] = $true
+          }
+          if ('${{ inputs.warnings-as-errors }}' -eq 'true') {
+            $params['WarningsAsErrors'] = $true
+          }
+          
+          # Pass footer exclude paths if provided (overrides script defaults)
+          $footerExcludeInput = '${{ inputs.footer-exclude-paths }}'
+          if ($footerExcludeInput -and $footerExcludeInput -ne '') {
+            $params['FooterExcludePaths'] = $footerExcludeInput -split ',' | ForEach-Object { $_.Trim() }
+          }
+          
+          & scripts/linting/Validate-MarkdownFrontmatter.ps1 @params
+        continue-on-error: true
+
+      - name: Upload frontmatter validation results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: frontmatter-validation-results
+          path: logs/frontmatter-validation-results.json
+          retention-days: 30
+
+      - name: Check results and fail if needed
+        if: ${{ !inputs.soft-fail }}
+        shell: pwsh
+        run: |
+          if ($env:FRONTMATTER_VALIDATION_FAILED -eq 'true') {
+            Write-Host "Frontmatter validation failed and soft-fail is false. Failing the job."
+            exit 1
+          }

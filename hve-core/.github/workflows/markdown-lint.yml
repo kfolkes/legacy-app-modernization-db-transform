@@ -1,0 +1,80 @@
+name: Markdown Lint
+
+on:
+  workflow_call:
+    inputs:
+      soft-fail:
+        description: 'Whether to continue on markdown lint violations'
+        required: false
+        type: boolean
+        default: false
+
+# Minimal permissions
+permissions:
+  contents: read
+
+jobs:
+  markdown-lint:
+    name: Markdown Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v4.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run markdown lint
+        id: markdown-lint
+        run: |
+          npm run lint:md > markdown-lint-output.txt 2>&1 || echo "MARKDOWN_LINT_FAILED=true" >> "$GITHUB_ENV"
+          cat markdown-lint-output.txt
+        continue-on-error: true
+
+      - name: Create annotations
+        if: env.MARKDOWN_LINT_FAILED == 'true'
+        run: |
+          echo "::warning::Markdown lint found violations. Review markdown-lint-output.txt artifact for details."
+
+      - name: Upload markdown lint results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v4.4.3
+        with:
+          name: markdown-lint-results
+          path: markdown-lint-output.txt
+          retention-days: 30
+
+      - name: Add job summary
+        if: always()
+        run: |
+          if [ "${{ env.MARKDOWN_LINT_FAILED }}" == "true" ]; then
+            {
+              echo "## Markdown Lint Results"
+              echo "❌ **Status**: Failed"
+              echo ""
+              echo "Markdown linting violations detected. Please review the artifact for details."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            {
+              echo "## Markdown Lint Results"
+              echo "✅ **Status**: Passed"
+              echo ""
+              echo "No markdown linting violations detected."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Fail job if violations found
+        if: env.MARKDOWN_LINT_FAILED == 'true' && !inputs.soft-fail
+        run: |
+          echo "Markdown lint failed"
+          exit 1

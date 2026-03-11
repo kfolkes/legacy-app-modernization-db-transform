@@ -1,0 +1,28 @@
+# Build outputs
+**/bin/
+**/obj/
+**/packages/
+**/TestResults/
+
+# IDE
+.vs/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# Secrets
+appsettings.Development.json
+*.pfx

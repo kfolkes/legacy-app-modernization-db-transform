@@ -1,0 +1,57 @@
+name: CodeQL Security Analysis
+
+on:
+  schedule:
+    # Weekly scan: Sundays at 4 AM UTC
+    - cron: '0 4 * * 0'
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write  # Required for SARIF upload to Security tab
+      actions: read
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        # Repository contains GitHub Actions workflows, PowerShell, and shell scripts
+        # CodeQL supports 'actions' for workflow security scanning
+        language: [ 'actions' ]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@ce729e4d353d580e6cacd6a8cf2921b72e5e310a # v3.27.0
+        with:
+          category: "/language:${{ matrix.language }}"
+
+      - name: Add job summary
+        if: always()
+        run: |
+          {
+            echo "## CodeQL Security Analysis Complete"
+            echo "**Language:** ${{ matrix.language }}"
+            echo "**Queries:** security-extended, security-and-quality"
+            echo ""
+            echo "📊 View results in the Security tab under Code Scanning"
+          } >> "$GITHUB_STEP_SUMMARY"

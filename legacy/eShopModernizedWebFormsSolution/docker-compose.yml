@@ -1,0 +1,11 @@
+version: '3.4'
+
+services:
+  eshop.modernized.webforms:
+    image: eshop/modernizedwebforms
+    build:
+      context: .\src\eShopModernizedWebForms
+      dockerfile: Dockerfile
+
+  sql.data:
+    image: microsoft/mssql-server-windows-developer

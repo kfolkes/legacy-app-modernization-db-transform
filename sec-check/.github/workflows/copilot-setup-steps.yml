@@ -1,0 +1,248 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation,
+# and allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      # ============================================================
+      # PYTHON SETUP (Required for Checkov and useful for projects)
+      # ============================================================
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # ============================================================
+      # JAVA SETUP (Required for OWASP Dependency-Check)
+      # ============================================================
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      # ============================================================
+      # NODE.JS SETUP (Required for ESLint security scanning)
+      # ============================================================
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # ============================================================
+      # GRAUDIT SECURITY SCANNER
+      # Grep-based source code auditing tool for detecting dangerous
+      # patterns, command injection, hardcoded secrets, and more.
+      # https://github.com/wireghoul/graudit
+      # ============================================================
+      - name: Install Graudit
+        run: |
+          echo "Installing Graudit Security Scanner..."
+          git clone https://github.com/wireghoul/graudit ~/graudit
+          echo "$HOME/graudit" >> $GITHUB_PATH
+          echo "GRDIR=$HOME/graudit/signatures" >> $GITHUB_ENV
+
+      - name: Verify Graudit installation
+        run: |
+          export PATH="$HOME/graudit:$PATH"
+          export GRDIR="$HOME/graudit/signatures"
+          graudit -h || echo "Graudit help command executed"
+          echo "Available Graudit signature databases:"
+          ls -la ~/graudit/signatures/
+
+      # ============================================================
+      # OWASP DEPENDENCY-CHECK
+      # Software Composition Analysis (SCA) tool that identifies
+      # known vulnerabilities (CVEs) in project dependencies.
+      # https://github.com/dependency-check/DependencyCheck
+      # ============================================================
+      - name: Install OWASP Dependency-Check
+        run: |
+          echo "Installing OWASP Dependency-Check..."
+          # Get the latest version
+          DC_VERSION=$(curl -s https://dependency-check.github.io/DependencyCheck/current.txt)
+          echo "Latest Dependency-Check version: $DC_VERSION"
+          
+          # Download and extract
+          curl -Ls "https://github.com/dependency-check/DependencyCheck/releases/download/v${DC_VERSION}/dependency-check-${DC_VERSION}-release.zip" -o /tmp/dependency-check.zip
+          unzip -q /tmp/dependency-check.zip -d ~/
+          
+          # Add to PATH
+          echo "$HOME/dependency-check/bin" >> $GITHUB_PATH
+
+      - name: Verify Dependency-Check installation
+        run: |
+          export PATH="$HOME/dependency-check/bin:$PATH"
+          dependency-check.sh --version
+
+      # ============================================================
+      # CHECKOV SECURITY SCANNER
+      # Infrastructure as Code (IaC) static analysis tool for
+      # detecting misconfigurations in Terraform, CloudFormation,
+      # Kubernetes, Dockerfiles, and more.
+      # https://github.com/bridgecrewio/checkov
+      # ============================================================
+      - name: Install Checkov
+        run: |
+          echo "Installing Checkov Security Scanner..."
+          pip install --upgrade pip
+          pip install checkov
+
+      - name: Verify Checkov installation
+        run: |
+          checkov --version
+          echo "Checkov frameworks supported:"
+          checkov --list | head -50
+
+      # ============================================================
+      # GUARDDOG SECURITY SCANNER
+      # Detects malicious packages and supply chain attacks in
+      # Python (PyPI) and Node.js (npm) ecosystems.
+      # https://github.com/DataDog/guarddog
+      # ============================================================
+      - name: Install GuardDog
+        run: |
+          echo "Installing GuardDog Security Scanner..."
+          pip install guarddog
+
+      - name: Verify GuardDog installation
+        run: |
+          guarddog --version
+          echo "GuardDog is ready for scanning PyPI and npm packages"
+
+      # ============================================================
+      # BANDIT SECURITY SCANNER
+      # Python source code security linter that finds common
+      # security issues using AST analysis.
+      # https://github.com/PyCQA/bandit
+      # ============================================================
+      - name: Install Bandit
+        run: |
+          echo "Installing Bandit Security Scanner..."
+          pip install bandit[toml]
+
+      - name: Verify Bandit installation
+        run: |
+          bandit --version
+          echo "Bandit is ready for Python security scanning"
+
+      # ============================================================
+      # SHELLCHECK
+      # Static analysis tool for shell scripts that identifies
+      # bugs, security issues, and dangerous patterns.
+      # https://github.com/koalaman/shellcheck
+      # ============================================================
+      - name: Install ShellCheck
+        run: |
+          echo "Installing ShellCheck..."
+          sudo apt-get update
+          sudo apt-get install -y shellcheck
+
+      - name: Verify ShellCheck installation
+        run: |
+          shellcheck --version
+
+      # ============================================================
+      # TRIVY SECURITY SCANNER
+      # Comprehensive security scanner for containers, filesystems,
+      # IaC, and more. Detects CVEs, misconfigurations, and secrets.
+      # https://github.com/aquasecurity/trivy
+      # ============================================================
+      - name: Install Trivy
+        run: |
+          echo "Installing Trivy Security Scanner..."
+          # Install via script for latest version
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+      - name: Verify Trivy installation
+        run: |
+          trivy --version
+          echo "Trivy scanners available: vuln, misconfig, secret, license"
+
+      # ============================================================
+      # ESLINT WITH SECURITY PLUGINS
+      # JavaScript/TypeScript security analysis with security-focused
+      # plugins for detecting injection, XSS, and dangerous patterns.
+      # https://github.com/eslint/eslint
+      # ============================================================
+      - name: Install ESLint with security plugins
+        run: |
+          echo "Installing ESLint with security plugins..."
+          npm install -g \
+            eslint \
+            eslint-plugin-security \
+            eslint-plugin-no-unsanitized \
+            @typescript-eslint/parser \
+            @typescript-eslint/eslint-plugin
+
+      - name: Verify ESLint installation
+        run: |
+          eslint --version
+          echo "ESLint security plugins installed:"
+          npm list -g eslint-plugin-security eslint-plugin-no-unsanitized --depth=0
+
+      # ============================================================
+      # FINAL VERIFICATION
+      # ============================================================
+      - name: Verify all security tools are available
+        run: |
+          echo "=========================================="
+          echo "Security Scanning Tools Installation Summary"
+          echo "=========================================="
+          echo ""
+          echo "1. Graudit:"
+          which graudit || echo "   Location: $HOME/graudit/graudit"
+          echo "   Signature databases available in: $HOME/graudit/signatures/"
+          echo ""
+          echo "2. OWASP Dependency-Check:"
+          which dependency-check.sh || echo "   Location: $HOME/dependency-check/bin/dependency-check.sh"
+          dependency-check.sh --version 2>/dev/null || true
+          echo ""
+          echo "3. Checkov:"
+          which checkov
+          checkov --version
+          echo ""
+          echo "4. GuardDog:"
+          which guarddog
+          guarddog --version
+          echo ""
+          echo "5. Bandit:"
+          which bandit
+          bandit --version
+          echo ""
+          echo "6. ShellCheck:"
+          which shellcheck
+          shellcheck --version | head -2
+          echo ""
+          echo "7. Trivy:"
+          which trivy
+          trivy --version
+          echo ""
+          echo "8. ESLint:"
+          which eslint
+          eslint --version
+          echo ""
+          echo "========================================="
+          echo "All 8 security scanning tools installed successfully!"
+          echo "=========================================="

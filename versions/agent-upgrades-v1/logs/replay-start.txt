@@ -1,0 +1,4 @@
+﻿Replay reset completed: 2026-03-05 20:23:38
+Legacy source (existing local repo): legacy/eShopLegacyMVCSolution
+Use this prompt in Copilot Chat:
+/dotnet10.modernize.agent-upgrades-v1 legacy/eShopLegacyMVCSolution
