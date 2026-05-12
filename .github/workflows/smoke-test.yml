@@ -1,0 +1,45 @@
+name: smoke-test
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  dotnet-build:
+    name: .NET 10 build smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Restore + build modernized .NET
+        working-directory: modernized/dotnet-eshop
+        run: |
+          if [ -f eShopModernized.sln ]; then
+            dotnet restore eShopModernized.sln
+            dotnet build eShopModernized.sln --no-restore --configuration Release
+          else
+            echo "modernized/dotnet-eshop has no solution yet — run /dotnet.modernize first"
+          fi
+
+  java-build:
+    name: Java 21 build smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'microsoft'
+          java-version: '21'
+          cache: 'maven'
+      - name: Maven verify modernized Java
+        working-directory: modernized/java-asset-manager
+        run: |
+          if [ -f pom.xml ]; then
+            mvn -B -ntp verify
+          else
+            echo "modernized/java-asset-manager has no pom.xml yet — run /java.modernize first"
+          fi

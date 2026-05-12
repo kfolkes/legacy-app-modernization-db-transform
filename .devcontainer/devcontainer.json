@@ -1,0 +1,73 @@
+{
+  "name": "App Modernization Lab (.NET 10 + Java 21)",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "dockerDashComposeVersion": "v2"
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "10.0",
+      "additionalVersions": "8.0"
+    },
+    "ghcr.io/devcontainers/features/java:1": {
+      "version": "21",
+      "jdkDistro": "ms",
+      "installMaven": true,
+      "installGradle": true,
+      "additionalVersions": "8"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    },
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.12"
+    }
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "forwardPorts": [5000, 5001, 8080, 8443, 1433, 5432],
+  "portsAttributes": {
+    "5000": { "label": ".NET HTTP", "onAutoForward": "silent" },
+    "5001": { "label": ".NET HTTPS", "onAutoForward": "silent" },
+    "8080": { "label": "Java HTTP", "onAutoForward": "silent" },
+    "8443": { "label": "Java HTTPS", "onAutoForward": "silent" },
+    "1433": { "label": "SQL Server", "onAutoForward": "silent" },
+    "5432": { "label": "PostgreSQL", "onAutoForward": "silent" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.copilot",
+        "github.copilot-chat",
+        "github.vscode-github-actions",
+        "ms-azuretools.vscode-docker",
+        "ms-azuretools.vscode-bicep",
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-dotnettools.vscode-dotnet-modernize",
+        "vscjava.vscode-java-pack",
+        "vscjava.vscode-spring-boot-dashboard",
+        "vscjava.vscode-spring-initializr",
+        "vscjava.migrate-java-to-azure",
+        "vscjava.vscode-maven",
+        "redhat.java",
+        "redhat.vscode-yaml",
+        "ms-mssql.mssql",
+        "ms-ossdata.vscode-pgsql"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "dotnet.defaultSolution": "modernized/dotnet-eshop/eShopModernized.sln"
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "remoteUser": "vscode"
+}

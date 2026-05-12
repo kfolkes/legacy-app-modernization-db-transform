@@ -1,78 +1,112 @@
-# Copilot Instructions — sbux-appmod-demo
+# Copilot Instructions — App Modernization Lab
 
-## What This Repo Is
+## What this repo is
 
-A **demo workspace for end-to-end .NET Framework → .NET 10 modernization** using GitHub Copilot agents, skills, and tools. It showcases an 8-phase modernization pipeline applied to the `eShopModernizing` sample app (.NET Framework 4.7.2 → net10.0).
+A reusable accelerator that uses GitHub Copilot agents to modernize legacy applications into Azure-ready, current-stack apps. Two languages, one pipeline:
 
-## Workspace Layout (4 Git Repos + Orchestration)
+- **.NET Framework → .NET 10** via `/dotnet.modernize`
+- **Java 8/11/17 → Java 21 + Spring Boot 3** via `/java.modernize`
+
+Both share the same 8-phase pipeline, devcontainer, and evidence-doc contract. Only the toolchain differs.
+
+## Repo layout
 
 ```
-.github/                        # Orchestration layer (agents, skills, prompts)
-├── agents/                     # Chat agents (appmodernization-dotnet, pm-migration-agent)
-├── skills/                     # Reusable skill definitions (dotnet-modernization, dotnet10-modernization-customer)
-└── prompts/                    # One-click replay prompts (dotnet10.modernize*)
-legacy/                         # Source: eShopModernizing (.NET Framework 4.7.2, MVC 5, EF6, Autofac, log4net)
-modernized/                     # Target: eShopModernized (net10.0, EF Core, built-in DI, Serilog, OpenTelemetry)
-hve-core/                       # HVE Core framework (RPI methodology, task-researcher/task-planner/rpi-agent)
-sec-check/                      # Security scanner agent (@sechek.security-scanner, Python CLI + Copilot toolkit)
-versions/agent-upgrades-v1/     # Versioned replay output (docs/, modernized/, logs/)
-docs/                           # Generated phase result documents (01 through 08)
+.github/                                  # Orchestration (agents, skills, prompts)
+├── agents/                               # Chat agents (one per stack + optional PM)
+├── skills/dotnet-modernization-flow/     # .NET single source of truth
+├── skills/java-modernization-flow/       # Java single source of truth
+└── prompts/                              # /dotnet.modernize, /java.modernize
+legacy/
+├── dotnet-eshop/                         # .NET Framework sample (eShopModernizing)
+└── java-asset-manager/                   # Java sample from java-migration-copilot-samples
+modernized/
+├── dotnet-eshop/                         # .NET 10 output
+└── java-asset-manager/                   # Java 21 + Spring Boot 3 output
+docs/
+├── dotnet/                               # .NET phase evidence (01-08)
+└── java/                                 # Java phase evidence (01-08)
+sec-check/                                # Security scanner used in phases 2 + 5
+templates/                                # Optional scaffolds (microservice / BFF / Aspire)
+scripts/                                  # Headless helpers + CI entry points
 ```
 
-**Key rule:** Orchestration lives in `.github/`. Generated evidence docs live in `docs/` or `versions/*/docs/`. Never mix orchestration content into result doc folders.
+**Key rule:** Orchestration lives in `.github/`. Generated evidence docs live in `docs/<stack>/`. Never mix orchestration content into result-doc folders.
 
-## The 8-Phase Pipeline
+## The 8-phase pipeline
 
-The single source of truth is `.github/skills/dotnet10-modernization-customer/SKILL.md`. Every phase combines three input sources:
+Single source of truth per stack:
+- `.github/skills/dotnet-modernization-flow/SKILL.md`
+- `.github/skills/java-modernization-flow/SKILL.md`
 
-| Source | Role |
+Both flows have identical phases:
+
+| Phase | Output |
 |---|---|
-| **HVE Core agents** (`task-researcher`, `task-planner`, `rpi-agent`) | Qualitative analysis via RPI methodology |
-| **AppMod-Dotnet tools** (`appmod-dotnet-*`) | Objective assessment, CVE checks, build/test validation |
-| **awesome-copilot + dotnet-upgrade** | Proven migration patterns, package replacement recipes |
+| 0. Precheck | — |
+| 1. Assessment | `docs/<stack>/01-legacy-assessment.md` |
+| 2. Security baseline | `docs/<stack>/02-security-baseline.md` |
+| 3. Modernization plan | `docs/<stack>/03-modernization-plan.md` |
+| 4. Implementation | source code in `modernized/<stack>/` |
+| 5. Security revalidation | `docs/<stack>/05-security-comparison.md` |
+| 6. Build + test validation | — |
+| 7. Architecture documentation | `docs/<stack>/07-architecture-documentation.md` |
+| 8. Deployment plan | `docs/<stack>/08-deployment-plan.md` |
 
-**Always merge findings from all three sources.** Phase 3 (Modernization Plan) must explicitly list patterns from both awesome-copilot AND the dotnet-upgrade tool.
+## Critical conventions
 
-### Result Docs Contract
+- **Never hardcode the source version.** Always detect from `*.csproj` / `packages.config` / `global.json` / `*.sln` (.NET) or `pom.xml` / `build.gradle` / `.java-version` (Java).
+- **Always target current stable:** `net10.0` for .NET, JDK 21 + Spring Boot 3.3 for Java.
+- **Always merge ≥2 tools per critical phase** — no single tool decides assessment, plan, or validation outcomes.
+- **Modernized code patterns must include `// SECURITY FIX:` and `// MIGRATION:` comments** explaining what changed and why.
+- **Default Azure target is Container Apps** unless the customer specifies otherwise.
 
-| File | Phase |
-|---|---|
-| `docs/01-legacy-assessment.md` | Phase 1: Legacy Assessment |
-| `docs/02-security-baseline.md` | Phase 2: Security Baseline |
-| `docs/03-modernization-plan.md` | Phase 3: Modernization Plan |
-| `docs/05-security-comparison.md` | Phase 5: Security Revalidation |
-| `docs/07-architecture-documentation.md` | Phase 7: Architecture Docs |
-| `docs/08-deployment-plan.md` | Phase 8: Deployment Plan |
+## Modernized .NET defaults
 
-## Critical Conventions
+- SDK-style `*.csproj`
+- Minimal hosting `Program.cs` (replaces `Global.asax`)
+- Built-in DI (replaces Autofac)
+- Serilog (replaces log4net)
+- EF Core with HiLo (replaces EF6)
+- Async + `CancellationToken`
+- User Secrets (replaces `Web.config`)
 
-- **Never hardcode or assume the source .NET Framework version.** Always detect it from `*.csproj`, `packages.config`, `global.json`, or `*.sln` metadata.
-- **Always target `net10.0`** for the modernized output.
-- **Modernized code patterns:** SDK-style csproj, minimal hosting `Program.cs` (replaces `Global.asax`), built-in DI (replaces Autofac), Serilog (replaces log4net), EF Core with HiLo sequences (replaces EF6), async with `CancellationToken` throughout, User Secrets for connection strings (replaces `Web.config`).
-- **Security comments in code:** Modernized files include `// SECURITY FIX:` and `// MIGRATION:` comments explaining what changed and why. Preserve this convention when editing.
+## Modernized Java defaults
 
-## Key Commands
+- JDK 21
+- Spring Boot 3.3 (`javax.*` → `jakarta.*`)
+- Jakarta EE 10 (where applicable)
+- JUnit 5
+- SLF4J + Logback
+- Spring Data JPA
+- Azure Service Bus (replaces RabbitMQ / on-prem MQ)
+- Azure Blob (replaces local file storage)
+- Key Vault + Managed Identity (replaces hardcoded secrets)
 
-```powershell
-# Reset the versioned replay workspace before a new run
-.\versions\agent-upgrades-v1\run-replay.ps1
+## Key commands
 
-# One-click modernization via Copilot Chat
-# /dotnet10.modernize.agent-upgrades-v1 legacy/eShopLegacyMVCSolution
+```bash
+# One-click from Copilot Chat
+/dotnet.modernize                                            # default sample
+/dotnet.modernize legacy/dotnet-eshop/eShopLegacyMVCSolution # explicit
+/java.modernize                                              # default sample
+/java.modernize legacy/java-asset-manager                    # explicit
 
-# Build modernized app
-dotnet build modernized/eShopModernized.sln
-
-# Run tests
-dotnet test modernized/tests/eShopModernized.Tests/
+# Build modernized output
+dotnet build modernized/dotnet-eshop/eShopModernized.sln
+mvn -f modernized/java-asset-manager/pom.xml verify
 ```
 
-## When Editing Agents, Skills, or Prompts
+## When editing agents, skills, or prompts
 
-- Agent definitions (`.github/agents/*.agent.md`) declare tool access and execution rules — keep the `tools:` frontmatter in sync with what the agent actually uses.
-- Skill files (`.github/skills/*/SKILL.md`) use `requires.agents` and `requires.tools` frontmatter — update these when adding new tool dependencies.
-- Prompt files (`.github/prompts/*.prompt.md`) bind to a specific agent via `agent:` frontmatter and define output paths — `versions/agent-upgrades-v1/` for replay, `docs/` for default runs.
+- Agent definitions (`.github/agents/*.agent.md`) declare tool access — keep `tools:` frontmatter in sync with what the agent actually uses.
+- Skill files (`.github/skills/*/SKILL.md`) use `requires.agents` and `requires.tools` frontmatter — update when adding tool dependencies.
+- Prompt files (`.github/prompts/*.prompt.md`) bind to a specific agent via `agent:` frontmatter and define output paths under `docs/<stack>/`.
 
-## sec-check Integration
+## sec-check integration
 
-sec-check is a Python-based security scanner with its own copilot instructions at `sec-check/.github/copilot-instructions.md`. It provides the `@sechek.security-scanner` agent used in Phases 2 and 5. When modifying sec-check itself, follow that subproject's conventions (Python 3.12, venv, Copilot SDK).
+`sec-check/` is a Python multi-scanner used in Phases 2 and 5 for both stacks. It has its own `copilot-instructions.md` at `sec-check/.github/copilot-instructions.md`. Follow that subproject's conventions when editing sec-check itself.
+
+## Optional templates
+
+`templates/` contains optional scaffolds (Aspire orchestrator, .NET microservice, Kotlin BFF). They are not required by either core flow — use them only when Phase 3 of the plan recommends microservice decomposition or a BFF.

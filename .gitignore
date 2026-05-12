@@ -26,3 +26,19 @@ node_modules/
 # Secrets
 appsettings.Development.json
 *.pfx
+
+# Internal demo scripts (keep local, never push)
+DEMO-SCRIPT.md
+SIP-AND-SYNC-SCRIPT.md
+SALES-PLAYBOOK.md
+
+# Internal versioned replay artifacts (build outputs with local paths)
+versions/
+
+# Generated assessment logs with hardcoded paths
+**/appcat.log
+**/dirty-sources.txt
+
+# Kotlin build caches
+templates/kotlin-bff-template/build/
+templates/kotlin-bff-template/.gradle/

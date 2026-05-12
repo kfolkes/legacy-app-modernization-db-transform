@@ -1,0 +1,20 @@
+# Auto-detect text files and normalize line endings on commit
+* text=auto eol=lf
+
+# Always LF for scripts (so they run in the devcontainer)
+*.sh   text eol=lf
+*.bash text eol=lf
+
+# Always CRLF for Windows-only files
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+
+# Treat known binaries as binary
+*.png  binary
+*.jpg  binary
+*.gif  binary
+*.ico  binary
+*.exe  binary
+*.dll  binary
+*.zip  binary
+*.gz   binary
