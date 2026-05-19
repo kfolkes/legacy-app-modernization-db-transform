@@ -222,7 +222,7 @@ fi
 
 ### Example Output Format
 ```
-src/api/auth.py:45:    password = "admin123"
+src/api/auth.py:45:    password = "PASSWORD_REDACTED"
 src/utils/shell.py:23:    os.system(user_input)
 src/db/query.py:89:    cursor.execute("SELECT * FROM users WHERE id=" + id)
 ```

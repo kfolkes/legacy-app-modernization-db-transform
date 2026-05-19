@@ -253,7 +253,7 @@ ResultSet results = stmt.executeQuery(query);
 **Current Code** (Line 18):
 ```java
 // Testing API token key
-private static final String API_TOKEN = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q";
+private static final String API_TOKEN = "GOOGLE_API_KEY_REDACTED";
 ```
 
 **Risk**: Even in test code, hardcoded secrets can:
@@ -287,7 +287,7 @@ private static final String API_TOKEN = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q
   - **Remove** lines 17-18:
     ```java
     // Testing API token key
-    private static final String API_TOKEN = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q";
+    private static final String API_TOKEN = "GOOGLE_API_KEY_REDACTED";
     ```
   - **Add** environment-based retrieval if actually needed:
     ```java
@@ -309,7 +309,7 @@ private static final String API_TOKEN = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q
   - **If found**: Update all usages to use environment variable pattern
 
 - [ ] **T016** [HIGH] Rotate the exposed Google API credential
-  - **Action**: Revoke `AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q` in Google Cloud Console
+  - **Action**: Revoke `GOOGLE_API_KEY_REDACTED` in Google Cloud Console
   - **Generate**: New API key if actually needed for testing
   - **Store**: In CI/CD secrets manager (GitHub Secrets, Vault, etc.)
   - **Document**: Secret rotation procedure for team
@@ -320,7 +320,7 @@ private static final String API_TOKEN = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q
   - **Command**:
     ```bash
     # Using BFG (recommended)
-    bfg --replace-text secrets.txt  # contains: AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q==>REMOVED
+    bfg --replace-text secrets.txt  # contains: GOOGLE_API_KEY_REDACTED==>REMOVED
     git reflog expire --expire=now --all
     git gc --prune=now --aggressive
     
@@ -885,7 +885,7 @@ ResultSet rs = pstmt.executeQuery();
 **Java Example:**
 ```java
 // ❌ VULNERABLE
-private static final String API_KEY = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q";
+private static final String API_KEY = "GOOGLE_API_KEY_REDACTED";
 
 // ✅ SECURE
 private String getApiKey() {

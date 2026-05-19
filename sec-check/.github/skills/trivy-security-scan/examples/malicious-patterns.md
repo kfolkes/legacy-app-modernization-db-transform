@@ -51,24 +51,24 @@ Trivy identifies hardcoded secrets in code, configuration files, and container i
 #### AWS Credentials
 ```python
 # DETECTED: AWS Access Key
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_REDACTED"
+AWS_SECRET_ACCESS_KEY = "AWS_SECRET_KEY_REDACTED"
 
 # In environment files
 # .env
-AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_REDACTED
 ```
 
 #### API Tokens
 ```javascript
 // DETECTED: GitHub Personal Access Token
-const GITHUB_TOKEN = "ghp_EXAMPLETOKEN1234567890abcdefghijk";
+const GITHUB_TOKEN = "GITHUB_TOKEN_REDACTED";
 
 // DETECTED: Slack Token
-const SLACK_TOKEN = "xoxb-EXAMPLE-TOKEN-PLACEHOLDER";
+const SLACK_TOKEN = "SLACK_TOKEN_REDACTED";
 
 // DETECTED: Stripe API Key
-const STRIPE_KEY = "sk_test_EXAMPLE_KEY_PLACEHOLDER";
+const STRIPE_KEY = "STRIPE_KEY_REDACTED";
 ```
 
 #### Database Credentials
@@ -77,8 +77,8 @@ const STRIPE_KEY = "sk_test_EXAMPLE_KEY_PLACEHOLDER";
 database:
   host: localhost
   username: admin
-  password: SuperSecret123!
-  connection_string: "postgresql://admin:SuperSecret123!@db.example.com:5432/prod"
+  password: REDACTED_PASSWORD
+  connection_string: "postgresql://admin:REDACTED_PASSWORD@db.example.com:5432/prod"
 ```
 
 #### Private Keys
@@ -113,10 +113,10 @@ Total: 4 (HIGH: 2, CRITICAL: 2)
 ┌────────────────────────┬───────────┬────────┬────────────────────────────────────────────────┐
 │        Rule ID         │  Category │  Line  │                    Match                       │
 ├────────────────────────┼───────────┼────────┼────────────────────────────────────────────────┤
-│ aws-access-key-id      │ AWS       │   15   │ AKIAIOSFODNN7EXAMPLE                           │
+│ aws-access-key-id      │ AWS       │   15   │ AWS_ACCESS_KEY_REDACTED                           │
 │ aws-secret-access-key  │ AWS       │   16   │ wJalrXUtnFEMI/K7MDENG/bPxRfiCY...              │
-│ github-pat             │ GitHub    │   23   │ ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx               │
-│ generic-api-key        │ Generic   │   45   │ api_key = "sk_live_xxxxxx"                     │
+│ github-pat             │ GitHub    │   23   │ GITHUB_TOKEN_REDACTED               │
+│ generic-api-key        │ Generic   │   45   │ api_key = "API_KEY_REDACTED"                     │
 └────────────────────────┴───────────┴────────┴────────────────────────────────────────────────┘
 ```
 
@@ -408,7 +408,7 @@ FROM python:3.12-slim
 RUN pip install requests==2.19.0
 
 # DETECTED: Secrets in environment
-ENV API_KEY=sk_live_xxxxxxxx
+ENV API_KEY=API_KEY_REDACTEDxx
 
 # DETECTED: Running as root
 COPY --from=builder /src/dist/*.whl /app/
@@ -432,9 +432,9 @@ EOF
 
 # Create file with secrets
 cat > config.py << 'EOF'
-AWS_ACCESS_KEY_ID = "AKIAIOSFODNN7EXAMPLE"
-AWS_SECRET_ACCESS_KEY = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
-GITHUB_TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_REDACTED"
+AWS_SECRET_ACCESS_KEY = "AWS_SECRET_KEY_REDACTED"
+GITHUB_TOKEN = "GITHUB_TOKEN_REDACTEDxxxxxxxx"
 EOF
 
 # Create insecure Dockerfile

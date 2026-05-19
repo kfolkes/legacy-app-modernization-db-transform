@@ -30,10 +30,10 @@ data = eval(config_string)  # B307
 ### B105/B106/B107: Password Detection
 ```python
 # DETECTED: Hardcoded password string
-password = "SuperSecret123!"  # B105: Possible hardcoded password
+password = "PASSWORD_REDACTED"  # B105: Possible hardcoded password
 
 # DETECTED: Password in function argument
-connect(host="db.example.com", password="admin123")  # B106
+connect(host="db.example.com", password="PASSWORD_REDACTED")  # B106
 
 # DETECTED: Default password parameter
 def login(user, password="default"):  # B107: Possible hardcoded password

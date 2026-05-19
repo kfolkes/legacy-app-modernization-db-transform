@@ -105,7 +105,7 @@ Google API token hardcoded in test file:
 
 ```java
 // Testing API token key
-private static final String API_TOKEN = "AIzaSyAQfxPJiounkhOjODEO5ZieffeBv6yft2Q";
+private static final String API_TOKEN = "GOOGLE_API_KEY_REDACTED";
 ```
 
 #### Security Impact

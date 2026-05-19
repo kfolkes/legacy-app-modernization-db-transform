@@ -678,9 +678,9 @@ SECRET DETECTION OUTPUT:
 +----------+-------------------------------------------+----------+
 | Category |            Secret                         | Severity |
 +----------+-------------------------------------------+----------+
-| AWS      | AKIAIOSFODNN7EXAMPLE                      | CRITICAL |
-| GitHub   | ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  | HIGH     |
-| Generic  | password = "admin123"                     | MEDIUM   |
+| AWS      | AWS_ACCESS_KEY_REDACTED                      | CRITICAL |
+| GitHub   | GITHUB_TOKEN_REDACTED  | HIGH     |
+| Generic  | password = "PASSWORD_REDACTED"                     | MEDIUM   |
 +----------+-------------------------------------------+----------+
 ```
 

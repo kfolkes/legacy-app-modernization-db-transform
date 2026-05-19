@@ -6,8 +6,8 @@ import subprocess
 import os
 
 # Hardcoded password - BAD!
-api_key = "sk-1234567890abcdef"
-password = "admin123"
+api_key = "API_KEY_REDACTED"
+password = "PASSWORD_REDACTED"
 
 def execute_user_command(user_input):
     """Execute user input - DANGEROUS!"""

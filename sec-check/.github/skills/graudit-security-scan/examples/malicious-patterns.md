@@ -71,15 +71,15 @@ print $user_comment;
 
 ```python
 # DANGEROUS: Hardcoded credentials
-API_KEY = "sk-1234567890abcdef"
-password = "admin123"
-aws_secret = "AKIAIOSFODNN7EXAMPLE"
+API_KEY = "API_KEY_REDACTED"
+password = "PASSWORD_REDACTED"
+aws_secret = "AWS_ACCESS_KEY_REDACTED"
 ```
 
 ```javascript
 // DANGEROUS: Embedded tokens
-const TOKEN = "ghp_xxxxxxxxxxxxxxxxxxxx";
-const DB_PASSWORD = "production_password_123";
+const TOKEN = "GITHUB_TOKEN_REDACTED";
+const DB_PASSWORD = "PASSWORD_REDACTED";
 ```
 
 ## Dangerous File Operations
