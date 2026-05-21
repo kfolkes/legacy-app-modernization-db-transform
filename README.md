@@ -15,7 +15,7 @@ products:
   - azure-database-postgresql
   - github-copilot
 name: App Modernization Lab — .NET and Java to Azure
-description: Reusable, one-click app modernization accelerator for .NET Framework → .NET 10 and Java 8/11/17 → Java 21 + Spring Boot 3, orchestrated by GitHub Copilot agents.
+description: Dual-stack app modernization lab for bundled samples or bring-your-own .NET and Java applications, driven by GitHub Copilot App Modernization flows to produce Azure-ready output.
 urlFragment: app-modernization-lab
 ---
 -->
@@ -26,7 +26,7 @@ urlFragment: app-modernization-lab
 [![Open in Dev Containers](https://img.shields.io/static/v1?label=Dev%20Container&message=Open&color=blue&logo=visualstudiocode)](https://vscode.dev/redirect?url=vscode://ms-vscode-remote.remote-containers/cloneInVolume?url=https://github.com/Azure-Samples/app-modernization-lab)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-A **reusable, one-click** app modernization accelerator that upgrades legacy applications and re-platforms them onto Azure. Two stacks supported in the same repo:
+A **reusable, one-click** app modernization lab that upgrades legacy applications and re-platforms them onto Azure. You can run it against the bundled samples or point it at your own application. Two stacks are supported in the same repo:
 
 | Stack | Source | Target | One-click command |
 |---|---|---|---|
