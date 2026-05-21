@@ -17,6 +17,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- MIGRATION: implicit using for xUnit so [Fact]/[Theory] resolve without per-file `using Xunit;` -->
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\src\eShopModernized\eShopModernized.csproj" />
   </ItemGroup>
 
