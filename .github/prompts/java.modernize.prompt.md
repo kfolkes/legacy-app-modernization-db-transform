@@ -24,6 +24,7 @@ Execute phases 0–8 end-to-end via the **App Modernization for Java extension**
 ### Phase Workflow (extension-task driven)
 
 1. **Phase 0 — Precheck**
+   - **Reset demo state first**: run `bash scripts/reset-demo.sh java` to delete every file under `docs/java/` except `README.md`. Never reuse pre-existing evidence docs — the demo MUST regenerate them from scratch each run so phases reflect the live tool output, not a previous session. Also re-verify the modernized source tree against the legacy source rather than trusting the contents of `modernized/java-asset-manager/`.
    - Detect JDK + framework from `pom.xml` / `build.gradle` / `.java-version`.
    - Verify the App Modernization for Java extension is installed.
    - Verify Java 21 + Maven/Gradle + Docker available.

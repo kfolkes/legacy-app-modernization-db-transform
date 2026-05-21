@@ -24,6 +24,7 @@ Execute phases 0–8 end-to-end via the **App Modernization for .NET extension**
 ### Phase Workflow (extension-tool driven)
 
 1. **Phase 0 — Precheck**
+   - **Reset demo state first**: run `bash scripts/reset-demo.sh dotnet` to delete every file under `docs/dotnet/` except `README.md`. Never reuse pre-existing evidence docs — the demo MUST regenerate them from scratch each run so phases reflect the live tool output, not a previous session.
    - Detect source framework from `*.csproj` / `packages.config` / `global.json` / `*.sln`.
    - Run **`appmod-dotnet-install-appcat`** (idempotent).
    - Verify .NET 10 SDK available.

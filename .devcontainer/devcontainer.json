@@ -61,6 +61,10 @@
         "ms-mssql.mssql",
         "ms-ossdata.vscode-pgsql"
       ],
+      "unwantedRecommendations": [
+        "teamsdevapp.ms-teams-vscode-extension",
+        "ms-fabric.fabric-data-engineering"
+      ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
         "java.configuration.updateBuildConfiguration": "automatic",
