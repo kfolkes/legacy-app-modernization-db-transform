@@ -10,6 +10,10 @@ requires:
     - modernize-java-upgrade
     - modernize-java-security
     - modernize-java-assessment
+    - security-auditor
+    - audit-reviewer
+    - doc-auditor
+    - security-audit-interpreter
     - sechek.security-scanner
   extensions:
     - vscjava.migrate-java-to-azure   # App Modernization for Java (predefined Azure tasks)
@@ -71,8 +75,8 @@ Every phase calls one or more **App Modernization for Java extension** features.
 
 | Phase | Extension feature invoked | Sub-agent / task |
 |---|---|---|
-| 1 Assessment | `@modernize-java-assessment` (extension agent) + OpenRewrite scan | "Run assessment" task |
-| 2 Security baseline | `@modernize-java-security` (extension agent) + sec-check | "Run CVE check" task |
+| 1 Assessment | `@modernize-java-assessment` (extension agent) + OpenRewrite scan + doc-auditor | "Run assessment" task plus baseline architecture + documentation maturity evidence |
+| 2 Security baseline | `@modernize-java-security` (extension agent) + sec-check + security-auditor | "Run CVE check" task plus exposure analysis, finding chains, and missing controls |
 | 3 Plan synthesis | extension recommendations + Spring Boot 3 migration guide | (planning, no task) |
 | 4a Java + Spring upgrade | `@modernize-java-upgrade` (extension agent) | "Upgrade JDK + Spring Boot" predefined task |
 | 4b Migrate DB → Azure | extension predefined task | **"Migrate to Azure Database for PostgreSQL Flexible Server"** |
@@ -80,9 +84,9 @@ Every phase calls one or more **App Modernization for Java extension** features.
 | 4d Migrate messaging → Azure | extension predefined task | **"Migrate to Azure Service Bus"** |
 | 4e Health endpoints | extension custom skill | **"Expose health endpoints"** |
 | 4f Containerize | extension predefined task | **"Containerize Applications"** |
-| 5 Security delta | re-run `@modernize-java-security` | (same as Phase 2) |
+| 5 Security delta | re-run `@modernize-java-security` + audit-reviewer | scanner deltas, broken attack chains, remaining risk, owners, and deploy gap |
 | 6 Build + test | `mvn verify` (extension also offers integration test layers) | `modernization-integration-tests` skill (Layer 1–4) |
-| 7 Architecture | summarize what extension changed | (no task) |
+| 7 Architecture | summarize what extension changed + doc-auditor | architecture documentation and customer-ready documentation audit |
 | 8 Deployment | extension predefined task | **"Deploy to Azure"** (Container Apps) |
 
 > All five **Predefined Tasks** are first-class features of the extension and appear in its sidebar. The orchestrator must invoke them in this exact order — the extension stores intermediate state per task in `.github/java-upgrade/` (auto-managed).
@@ -97,12 +101,14 @@ Every critical step is validated by 2–3 independent tools.
 |---|---|---|---|
 | JDK + framework detection | `pom.xml`/`build.gradle` parse | `.java-version`/`Dockerfile` | bytecode major version |
 | Assessment | `@modernize-java-assessment` (extension) | OpenRewrite recipe scan | awesome-copilot Java analyzer |
-| Security baseline | sec-check | `@modernize-java-security` CVE scan | OWASP dep-check |
+| Documentation baseline | doc-auditor | assessment inventory | README / architecture / runbook evidence |
+| Security baseline | sec-check | `@modernize-java-security` CVE scan | security-auditor + OWASP dep-check |
 | Plan synthesis | extension recommendations | Spring Boot 3 migration guide | awesome-copilot Java patterns |
 | Implementation | extension Predefined Tasks (4b–4f) | OpenRewrite execution | awesome-copilot templates |
 | Build validation | `mvn verify` / `gradle build` | container build | dependency tree diff |
 | Test validation | `mvn test` | TestContainers (Layer 1) + Smoke (Layer 2) + Azure Integration (Layer 3) + Behavioral (Layer 4) | parity check |
 | Security revalidation | sec-check delta | extension CVE delta | OWASP delta |
+| Documentation readiness | doc-auditor | architecture docs | deployment + runbook evidence |
 | Azure readiness | extension "Deploy to Azure" task | Bicep/azd what-if | Container Apps probe |
 
 ---
@@ -121,13 +127,24 @@ Every critical step is validated by 2–3 independent tools.
 - Cross-validate with OpenRewrite recipe scan + awesome-copilot Java analyzer.
 - Detect framework features: Spring (version), Java EE / Jakarta EE, JPA/Hibernate, JMS/RabbitMQ, JAX-RS, JSP/Servlets, build system, javax vs jakarta.
 - Record baseline `mvn clean compile` result on the source JDK as a reference build.
+- Use `.github/skills/shared/01-baseline-architecture-template.md` as the evidence shape.
+- Produce more than an inventory: capture baseline architecture across runtime, hosting, dependency map, data, identity, integrations, operations, and customer handoff readiness.
+- Run a documentation baseline using `.github/skills/shared/documentation-audit-template.md`: README/onboarding, architecture, API, deployment, runbooks, security, testing, ADRs, and developer/user guides.
+- Identify architecture risk signals that affect migration or customer adoption: tight coupling, unsupported components, hardcoded configuration, local-only assumptions, hidden deployment dependencies, missing tests, missing observability, and missing ownership.
+- Recommend ADRs or specs for modernization decisions that are not obvious from the code, such as Azure target, Spring Boot 3/Jakarta strategy, identity model, data migration, messaging migration, logging/telemetry, or deployment strategy.
 
 ### Phase 2 — Security Baseline
 **Output:** `docs/java/02-security-baseline.md`
 - Invoke **extension agent**: `@modernize-java-security` (CVE scan).
 - Run `sec-check` (SAST + secrets + deps).
 - Run OWASP dependency-check.
-- Record severity counts and top issues.
+- Use `.github/skills/shared/02-security-baseline-template.md` as the evidence shape.
+- Combine scanner output with consequence-based interpretation from `security-auditor` and `security-audit-interpreter`; do not present isolated CVEs as the whole baseline.
+- Classify executive risk mode as `COVER`, `TRIAGE`, or `ASSUME BREACH` based on exposure, data sensitivity, and finding density.
+- Review security categories: authentication, authorization/access control, API security, input handling, backend security, crypto/secrets, database/data protection, third-party dependencies, secure logging/detection, infrastructure/container posture, UI security, and AI-specific risks when applicable.
+- Document finding chains: entry point, weaknesses chained, business impact, required fixes, owner, and deploy gap.
+- Document missing controls that scanners cannot fully prove: detection coverage, incident response wiring, secret rotation, escalation owner, and customer deployment timeline.
+- Convert findings into customer action priorities: fix now, plan next, accept with compensating control, or needs named owner.
 
 ### Phase 3 — Modernization Plan
 **Output:** `docs/java/03-modernization-plan.md`
@@ -169,7 +186,11 @@ Every critical step is validated by 2–3 independent tools.
 ### Phase 5 — Security Revalidation
 **Output:** `docs/java/05-security-comparison.md`
 - Re-run `@modernize-java-security` + sec-check + OWASP.
-- Produce before/after delta. Critical/High targets: 0.
+- Use `.github/skills/shared/05-security-comparison-template.md` as the evidence shape.
+- Produce scanner before/after delta. Critical/High targets: 0.
+- Compare risk reduction, not only finding counts: show which finding chains were broken, which links remain, and whether the executive risk mode changed.
+- Record remaining risks, accepted risks, compensating controls, named owners, target dates, and release recommendation.
+- Capture deploy gap explicitly: source fix, build artifact, test/staging deployment, all-customer deployment, and uncovered environments.
 
 ### Phase 6 — Build + Test Validation
 - `mvn -B -DskipTests clean compile` must succeed under JDK 21 → modernized tree.
@@ -180,6 +201,9 @@ Every critical step is validated by 2–3 independent tools.
 **Output:** `docs/java/07-architecture-documentation.md`
 - Before/after Mermaid diagrams.
 - Migration map (legacy component → modernized replacement, citing which extension task produced each change).
+- Re-run the documentation audit template and close or carry forward Phase-1 documentation gaps.
+- Include runtime, data, identity, integration, operations, deployment, security, and rollback views where the app has those concerns.
+- Record ADR recommendations for major modernization decisions and any customer-owned follow-up specs or runbooks.
 
 ### Phase 8 — Azure Deployment Plan
 **Output:** `docs/java/08-deployment-plan.md`

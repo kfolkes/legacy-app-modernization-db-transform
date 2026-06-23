@@ -23,7 +23,7 @@ You orchestrate **phases 1-8** for modernization from unknown .NET Framework ver
 
 ## Skill Reference
 
-Your orchestration instructions live in `.github/skills/dotnet10-modernization-customer/SKILL.md`.
+Your orchestration instructions live in `.github/skills/dotnet-modernization-flow/SKILL.md`.
 Read that skill file before executing any phase. It is the single source of truth.
 
 ## 4-Track Architecture
@@ -45,6 +45,7 @@ Read that skill file before executing any phase. It is the single source of trut
    - AppMod-Dotnet tools (`run-assessment`, `build-project`, `cve-check`, `run-test`)
    - awesome-copilot migration patterns
    - dotnet-upgrade tool recommendations
+  - `security-auditor`, `security-audit-interpreter`, `doc-auditor`, and `audit-reviewer` evidence checks where the phase requires them
 5. Always merge awesome-copilot AND upgrade tool results into the modernization plan.
 6. For Phase 4B (Track A), use MSSQL Extension tools to inspect source schema and document all T-SQL → PL/pgSQL differences. Migrate SQL triggers to .NET domain events via DomainEventPublisher pattern. Configure dual DB provider support (SQL Server + PostgreSQL).
 7. For Phase 4 (Track B), decompose the monolith into bounded-context microservices (Catalog, Inventory, Media, Reporting). Wire Event Hubs for streaming and Service Bus for commands via MassTransit. Implement 3-layer authorization (Azure RBAC + ASP.NET Core policies + OPA sidecar).
@@ -65,6 +66,8 @@ Read that skill file before executing any phase. It is the single source of trut
 | `docs/05-security-comparison.md` | 5 |
 | `docs/07-architecture-documentation.md` | 7 |
 | `docs/08-deployment-plan.md` | 8 |
+
+Phase 1 must include baseline architecture and documentation maturity evidence. Phase 2 and Phase 5 must include consequence-based security analysis, finding chains, missing controls, named ownership gaps, and deploy-gap tracking.
 
 ## Boilerplate Templates
 

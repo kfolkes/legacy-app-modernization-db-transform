@@ -18,6 +18,36 @@
 | Auth | Password-based for S3, RabbitMQ, PostgreSQL | `application.properties` plain creds |
 | Container/deploy | None | no `Dockerfile`, no `azure.yaml` |
 
+## Baseline Architecture and Documentation Maturity
+
+| Area | Baseline | Customer Handoff Risk |
+|---|---|---|
+| **Application shape** | Maven multi-module Spring Boot app with web and worker modules, MVC/Thymeleaf UI, JPA persistence, RabbitMQ messaging, and S3 storage | Medium — modernization must preserve web/worker boundaries and async image-processing behavior |
+| **Runtime / hosting** | JDK 8, Spring Boot 2.7.18, no container or Azure deployment artifact | High — runtime, framework, and hosting model all change in the target state |
+| **Data architecture** | PostgreSQL via Hibernate/JPA with password-based datasource config | Medium — target uses PostgreSQL Flexible Server and token-based auth |
+| **Identity and secrets** | AWS, RabbitMQ, and PostgreSQL credentials in `application.properties` | High — secrets migration and rotation must be explicit customer actions |
+| **Operations** | Logback defaults, no actuator health probes, no deployment or rollback runbook | High — Container Apps requires probes, logs, rollback, and owner handoff |
+| **Documentation maturity** | Phase docs exist; README, ADRs, API docs, runbooks, and security/operations docs need expansion | Medium — generated docs must become customer-operable documentation, not just lab evidence |
+
+### Documentation Baseline
+
+| Artifact | Status | Recommended Action |
+|---|---|---|
+| README / onboarding | Partial | Add JDK/Maven requirements, local services, config, build/test/run instructions, and modernized run path |
+| Architecture docs | Partial | Preserve legacy web/worker/data/messaging/storage view and link to Phase 7 before/after diagrams |
+| API / integration docs | Missing | Document web endpoints, queue contracts, storage object lifecycle, and failure modes |
+| Deployment docs | Missing | Add Container Apps, PostgreSQL, Service Bus, Blob, Key Vault, probes, rollback, and environment setup |
+| Runbooks | Missing | Add failed message processing, storage failure, database outage, and secret rotation runbooks |
+| Security docs | Partial | Link Phase 2 risks to Phase 3 migration tasks and Phase 5 residual risk |
+| ADRs / decisions | Missing | Create ADRs for Java 21, Spring Boot 3/Jakarta, Service Bus, Blob Storage, passwordless PostgreSQL, and Container Apps |
+
+### Architecture Risk Signals
+
+- The app crosses cloud boundaries today: AWS S3, RabbitMQ, and PostgreSQL credentials are all local configuration concerns.
+- The worker and web modules share integration assumptions that must migrate together to avoid partial cutovers.
+- Lack of health probes and deployment artifacts blocks direct Container Apps readiness.
+- Documentation does not yet capture queue contracts, object storage behavior, failure handling, or owner handoff.
+
 ## Baseline legacy build (verification)
 
 Built the legacy source as-is, under its declared JDK 8 (Adoptium Temurin 8u492), with Maven 3.9.0:

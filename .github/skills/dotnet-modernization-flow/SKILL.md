@@ -7,6 +7,10 @@ maturity: stable
 requires:
   agents:
     - appmodernization-dotnet
+    - security-auditor
+    - audit-reviewer
+    - doc-auditor
+    - security-audit-interpreter
     - sechek.security-scanner
   extensions:
     - ms-dotnettools.vscode-dotnet-modernize   # App Modernization for .NET (AppCAT + appmod-dotnet-* tools)
@@ -69,14 +73,14 @@ Every phase calls one or more **App Modernization for .NET extension** tools.
 | Phase | Extension tool invoked | Purpose |
 |---|---|---|
 | 0 Precheck | `appmod-dotnet-install-appcat` | Install / verify AppCAT |
-| 1 Assessment | `appmod-dotnet-run-assessment` | Run AppCAT against the legacy tree |
-| 2 Security baseline | `appmod-dotnet-cve-check` + sec-check | NuGet CVE scan + SAST/secrets |
+| 1 Assessment | `appmod-dotnet-run-assessment` + doc-auditor | Run AppCAT and produce baseline architecture + documentation maturity evidence |
+| 2 Security baseline | `appmod-dotnet-cve-check` + sec-check + security-auditor | NuGet CVE scan, SAST/secrets, exposure analysis, finding chains, and missing controls |
 | 3 Plan synthesis | `@appmodernization-dotnet` (agent) + awesome-copilot | Synthesize plan from assessment + CVEs |
 | 4 Implementation | `@appmodernization-dotnet` (agent) | Execute upgrade |
-| 5 Security delta | `appmod-dotnet-cve-check` + sec-check (re-run) | Compare to Phase 2 |
+| 5 Security delta | `appmod-dotnet-cve-check` + sec-check + audit-reviewer (re-run) | Compare scanner deltas, broken attack chains, remaining risk, owners, and deploy gap |
 | 6 Build | `appmod-dotnet-build-project` | Compile modernized solution |
 | 6 Test | `appmod-dotnet-run-test` | Run modernized test projects |
-| 7 Architecture | (no tool — agent summarizes) | Mermaid + migration map |
+| 7 Architecture | doc-auditor + agent summary | Mermaid + migration map + customer-ready documentation audit |
 | 8 Deployment | `@appmodernization-dotnet` deployment recommendation | Container Apps / App Service / AKS |
 
 ---
@@ -89,12 +93,14 @@ Every critical step is validated by 2–3 independent tools.
 |---|---|---|---|
 | Source version detection | csproj/packages.config parse | global.json | sln metadata |
 | Assessment | `appmod-dotnet-run-assessment` (AppCAT) | `@appmodernization-dotnet` agent | awesome-copilot upgrade analyzer |
-| Security baseline | sec-check | `appmod-dotnet-cve-check` | CodeQL |
+| Documentation baseline | doc-auditor | AppCAT inventory | README / architecture / runbook evidence |
+| Security baseline | sec-check | `appmod-dotnet-cve-check` | security-auditor + CodeQL |
 | Plan synthesis | awesome-copilot patterns | dotnet-upgrade recipes | extension agent recommendations |
 | Implementation | `@appmodernization-dotnet` agent | awesome-copilot templates | dotnet-upgrade tool |
 | Build validation | `appmod-dotnet-build-project` | `dotnet build` | csproj diff |
 | Test validation | `appmod-dotnet-run-test` | `dotnet test` | behavior parity |
 | Security revalidation | sec-check delta | `appmod-dotnet-cve-check` delta | CodeQL delta |
+| Documentation readiness | doc-auditor | architecture docs | deployment + runbook evidence |
 | Azure readiness | extension deployment recommendation | Bicep/azd what-if | Container Apps probe |
 
 ---
@@ -113,12 +119,23 @@ Every critical step is validated by 2–3 independent tools.
 - Cross-validate with `@appmodernization-dotnet` agent (app type + framework features) and awesome-copilot upgrade analyzer.
 - Detect features: WebForms, MVC, WCF, Autofac, log4net, EF6, async/sync split, packages.config vs PackageReference.
 - Record baseline build status with `appmod-dotnet-build-project`.
+- Use `.github/skills/shared/01-baseline-architecture-template.md` as the evidence shape.
+- Produce more than an inventory: capture baseline architecture across runtime, hosting, dependency map, data, identity, integrations, operations, and customer handoff readiness.
+- Run a documentation baseline using `.github/skills/shared/documentation-audit-template.md`: README/onboarding, architecture, API, deployment, runbooks, security, testing, ADRs, and developer/user guides.
+- Identify architecture risk signals that affect migration or customer adoption: tight coupling, unsupported components, hardcoded configuration, local-only assumptions, hidden deployment dependencies, missing tests, missing observability, and missing ownership.
+- Recommend ADRs or specs for modernization decisions that are not obvious from the code, such as Azure target, identity model, data migration, logging/telemetry, or deployment strategy.
 
 ### Phase 2 — Security Baseline
 **Output:** `docs/dotnet/02-security-baseline.md`
 - Invoke **`appmod-dotnet-cve-check`** for NuGet CVEs.
 - Run `sec-check` (SAST + secrets + deps).
-- Record severity counts and top 10 issues.
+- Use `.github/skills/shared/02-security-baseline-template.md` as the evidence shape.
+- Combine scanner output with consequence-based interpretation from `security-auditor` and `security-audit-interpreter`; do not present isolated CVEs as the whole baseline.
+- Classify executive risk mode as `COVER`, `TRIAGE`, or `ASSUME BREACH` based on exposure, data sensitivity, and finding density.
+- Review security categories: authentication, authorization/access control, API security, input handling, backend security, crypto/secrets, database/data protection, third-party dependencies, secure logging/detection, infrastructure/container posture, UI security, and AI-specific risks when applicable.
+- Document finding chains: entry point, weaknesses chained, business impact, required fixes, owner, and deploy gap.
+- Document missing controls that scanners cannot fully prove: detection coverage, incident response wiring, secret rotation, escalation owner, and customer deployment timeline.
+- Convert findings into customer action priorities: fix now, plan next, accept with compensating control, or needs named owner.
 
 ### Phase 3 — Modernization Plan
 **Output:** `docs/dotnet/03-modernization-plan.md`
@@ -143,7 +160,11 @@ Every critical step is validated by 2–3 independent tools.
 ### Phase 5 — Security Revalidation
 **Output:** `docs/dotnet/05-security-comparison.md`
 - Re-run **`appmod-dotnet-cve-check`** + sec-check.
-- Produce before/after delta. Critical/High targets: 0.
+- Use `.github/skills/shared/05-security-comparison-template.md` as the evidence shape.
+- Produce scanner before/after delta. Critical/High targets: 0.
+- Compare risk reduction, not only finding counts: show which finding chains were broken, which links remain, and whether the executive risk mode changed.
+- Record remaining risks, accepted risks, compensating controls, named owners, target dates, and release recommendation.
+- Capture deploy gap explicitly: source fix, build artifact, test/staging deployment, all-customer deployment, and uncovered environments.
 
 ### Phase 6 — Build + Test Validation
 - **`appmod-dotnet-build-project`** on modernized solution → must succeed.
@@ -154,6 +175,9 @@ Every critical step is validated by 2–3 independent tools.
 **Output:** `docs/dotnet/07-architecture-documentation.md`
 - Before/after Mermaid diagrams.
 - Migration map (legacy component → modernized replacement, citing the extension tool that produced each change).
+- Re-run the documentation audit template and close or carry forward Phase-1 documentation gaps.
+- Include runtime, data, identity, integration, operations, deployment, security, and rollback views where the app has those concerns.
+- Record ADR recommendations for major modernization decisions and any customer-owned follow-up specs or runbooks.
 
 ### Phase 8 — Deployment Plan
 **Output:** `docs/dotnet/08-deployment-plan.md`

@@ -16,6 +16,46 @@
 
 ---
 
+## Executive Risk Mode
+
+**Mode: TRIAGE.** The demo app is not carrying user authentication, but it does expose a realistic customer pattern: secrets in configuration, deprecated dependencies, raw data-access patterns, and logs that can preserve sensitive request context. The immediate risk is not one isolated CVE; it is the chain from exposed configuration to database access to weak detection and unclear rotation ownership.
+
+| Factor | Assessment |
+|---|---|
+| **Exposure** | Demo/local by default; customer deployments would commonly be web-facing after modernization |
+| **Data sensitivity** | Catalog and inventory data in the sample; customer variants may include pricing, supplier, user, or order data |
+| **Finding density** | 2 Critical, 4 High, 5 Medium clustered around secrets, dependencies, SQL/data access, and logging |
+| **Worst realistic chain** | Config exposure reveals connection/telemetry secrets, attacker accesses or manipulates data, request logs preserve sensitive traces, and rotation/IR ownership is not documented |
+
+## Finding Chains
+
+### Chain 1: Configuration Exposure Becomes Data Access
+
+- **Entry point:** `Web.config` and `ApplicationInsights.config` committed with sensitive configuration patterns.
+- **Weaknesses chained:** plaintext connection string, embedded telemetry key, static configuration access, no documented rotation path.
+- **Business impact:** database or telemetry misuse can outlive the code fix if secrets are not rotated and deployment owners are not named.
+- **Required fixes:** remove secrets from source, move production secrets to Key Vault or environment references, rotate exposed values, document owner and deploy timeline.
+- **Owner:** Not documented in baseline evidence.
+- **Deploy gap:** Not documented; must be tracked from source fix through all customer environments.
+
+### Chain 2: Legacy Dependencies Plus Weak Detection
+
+- **Entry point:** vulnerable client/server packages and EOL components.
+- **Weaknesses chained:** Newtonsoft.Json DoS, jQuery/Bootstrap XSS, EF6/App Insights deprecation, log4net request context capture.
+- **Business impact:** exploit attempts may be easier to trigger than to investigate because structured logging, masking, and incident procedures are incomplete.
+- **Required fixes:** remove or upgrade vulnerable dependencies, move to ASP.NET Core logging/OpenTelemetry, add redaction and investigation runbook.
+- **Owner:** Not documented in baseline evidence.
+
+## Missing Controls
+
+- **Detection:** No evidence of structured security events, alerting, or investigation queries.
+- **Incident response:** No documented call path for suspected secret exposure, XSS, or data access misuse.
+- **Rotation:** No documented process for connection string or telemetry key rotation.
+- **Escalation owner:** No named person or team owns security baseline acceptance.
+- **Customer deployment timeline:** No evidence for how long fixes take to reach every customer environment.
+
+---
+
 ## Scan Results by Tool
 
 ### Tool 1: OWASP Dependency-Check (NuGet CVE Scan)

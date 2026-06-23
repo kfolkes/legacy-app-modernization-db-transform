@@ -15,6 +15,33 @@
 
 ---
 
+## Risk Reduction Summary
+
+| Area | Before | After | Result |
+|---|---|---|---|
+| **Executive risk mode** | TRIAGE | COVER, with production-auth caveat | Critical/high chains are broken for the demo path; production identity remains customer-owned |
+| **Secret exposure chain** | Web.config and telemetry config carried sensitive values | Production secrets move to environment/User Secrets/Key Vault pattern | Broken if deployed with documented rotation and Key Vault ownership |
+| **Legacy dependency chain** | Vulnerable/EOL dependencies plus weak logging | Vulnerable packages removed/replaced; structured logging added | Broken for known findings |
+| **Detection and IR** | No structured detection or runbook evidence | Better logging and health checks exist | Partial — alert rules, incident runbook, and named owner still need customer confirmation |
+
+## Deploy Gap
+
+| Deployment Step | Status | Evidence / Gap |
+|---|---|---|
+| Source fix available | Complete | Modernized source removes critical/high findings listed below |
+| Build artifact available | Complete for demo | Modernized build evidence captured in Phase 6 |
+| Test/staging deployment | Not verified in this report | Phase 8 documents deployment plan, but no staging run is recorded here |
+| All-customer deployment | Not applicable to bundled demo | BYO engagements must track each customer environment explicitly |
+| Secret rotation complete | Not verified in this report | Rotation is required for any real exposed values before release |
+
+## Accepted Risk and Ownership Notes
+
+- Development LocalDB connection strings are acceptable only when they remain local, passwordless, and excluded from production deployment.
+- Authentication remains a customer decision because the sample catalog app intentionally has no user auth surface.
+- Production release should name owners for Key Vault, alerting, incident response, secret rotation, and all-customer deployment tracking.
+
+---
+
 ## Resolved Findings
 
 ### ✅ CRITICAL — All Resolved

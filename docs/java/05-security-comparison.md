@@ -1,5 +1,29 @@
 # Phase 5 — Security Comparison (before → after, Java)
 
+## Risk Reduction Summary
+
+| Area | Before | After | Result |
+|---|---|---|---|
+| **Executive risk mode** | TRIAGE | TRIAGE, trending to COVER after Phase 4b completion | Runtime risk is resolved; credential/service migration is partially complete |
+| **Credential exposure chain** | AWS, RabbitMQ, and PostgreSQL credentials in properties | Azure SDK dependencies and managed-identity direction staged | Partial — close only when code and config remove password/access-key fields and real secrets are rotated |
+| **Unsupported platform chain** | JDK 8, Spring Boot 2.7.x, deprecated APIs | JDK 21, Spring Boot 3.3.5, Jakarta/Spring 6-compatible APIs | Broken |
+| **Operations readiness** | No probes or container build | Actuator and Dockerfiles added | Partial — monitoring, rollback, and incident runbooks still need customer docs |
+
+## Deploy Gap
+
+| Deployment Step | Status | Evidence / Gap |
+|---|---|---|
+| Source fix available | Partial | Runtime and probe fixes are present; service migration is staged for Phase 4b |
+| Build artifact available | Complete for current modernized tree | JDK 21 compile evidence below |
+| Test/staging deployment | Not verified in this report | Azure resources and staging deployment are not recorded here |
+| All-customer deployment | Not applicable to bundled demo | BYO engagements must track each customer environment explicitly |
+| Secret rotation complete | Not verified in this report | Required if any real AWS/RabbitMQ/PostgreSQL secrets were committed or shared |
+
+## Accepted Risk and Ownership Notes
+
+- The remaining high-risk item is not acceptable for production until password/access-key config is removed and real credentials are rotated.
+- Customer release requires named owners for Key Vault/Managed Identity, Service Bus migration, Blob migration, PostgreSQL passwordless auth, monitoring, and incident response.
+
 | Finding | Legacy state | Modernized state | Status |
 |---|---|---|---|
 | Spring Boot version EOL | 2.7.18 (EOL 2025-11) | **3.3.5** (current LTS train) | ✅ Resolved |

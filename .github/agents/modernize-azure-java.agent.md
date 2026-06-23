@@ -40,10 +40,14 @@ Take any Java application (Spring Boot 1.x/2.x, plain Java EE, Ant/Maven/Gradle)
 4. Always cross-validate with at least two tools per critical phase (assessment, plan, security).
 5. Delegate as follows:
    - Phase 1 → `modernize-java-assessment`
-   - Phase 2 + 5 → `sechek.security-scanner` + `modernize-java-security`
+  - Phase 1 documentation baseline → `doc-auditor`
+  - Phase 2 + 5 → `sechek.security-scanner` + `modernize-java-security` + `security-auditor` + `security-audit-interpreter`
    - Phase 4 → `modernize-java-upgrade`
+  - Phase 5 evidence review and Phase 7 documentation readiness → `audit-reviewer` + `doc-auditor`
 6. Every modernized file must include `// SECURITY FIX:` / `// MIGRATION:` comments where applicable.
 7. Default Azure target = Container Apps; only switch if the customer explicitly asks.
+
+Phase 1 must include baseline architecture and documentation maturity evidence. Phase 2 and Phase 5 must include consequence-based security analysis, finding chains, missing controls, named ownership gaps, and deploy-gap tracking.
 
 ## Outputs
 

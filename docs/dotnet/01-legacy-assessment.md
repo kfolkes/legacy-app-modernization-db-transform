@@ -8,6 +8,39 @@ This document provides a comprehensive assessment of the **eShop Legacy MVC Appl
 
 ---
 
+## Baseline Architecture and Documentation Maturity
+
+| Area | Baseline | Customer Handoff Risk |
+|---|---|---|
+| **Application shape** | ASP.NET MVC 5 monolith with MVC controllers, Web API controllers, Razor views, EF6 services, stored procedures, and static startup in `Global.asax.cs` | Medium — modernization plan must preserve MVC behavior and inventory rules while moving startup and services to ASP.NET Core |
+| **Runtime / hosting** | .NET Framework 4.7.2, IIS-style hosting, `Web.config` configuration | High — hosting, configuration, and deployment model all change during the move to .NET 10 |
+| **Data architecture** | SQL Server LocalDB, EF6 DbContext, stored procedures, manual HiLo sequence helper | High — business rules embedded in SQL must be extracted and tested in application code |
+| **Identity and secrets** | No application auth in sample; connection strings and telemetry keys live in config files | High — production customers must make identity, authorization, and Key Vault decisions before release |
+| **Operations** | log4net file logging, no health checks, no structured telemetry, no rollback/runbook evidence | High — Container Apps readiness requires probes, structured logs, and deployment documentation |
+| **Documentation maturity** | Assessment and modernization docs exist; ADRs, runbooks, API docs, deployment ownership, and incident procedures are incomplete | Medium — customer handoff needs decision records and operational docs beyond generated phase notes |
+
+### Documentation Baseline
+
+| Artifact | Status | Recommended Action |
+|---|---|---|
+| README / onboarding | Partial | Add build, test, run, environment variable, and local database setup instructions for legacy and modernized paths |
+| Architecture docs | Partial | Keep this assessment as the baseline and link it to Phase 7 before/after architecture diagrams |
+| API docs | Missing | Document catalog and inventory endpoints, request/response shapes, and auth assumptions |
+| Deployment docs | Partial | Expand Phase 8 with environment-specific settings, probes, rollback, and owner handoff |
+| Runbooks | Missing | Add health check, failed deployment, database migration, and secret rotation runbooks |
+| Security docs | Partial | Link Phase 2 findings to Phase 3 fixes and Phase 5 residual risks |
+| ADRs / decisions | Missing | Create ADRs for .NET 10 target, EF Core migration, Key Vault/secrets model, logging/telemetry, and Azure Container Apps target |
+
+### Architecture Risk Signals
+
+- Business-critical inventory rules are concentrated in stored procedures, especially `sp_UpdateInventory`.
+- Configuration and secret handling are coupled to `Web.config`, which does not map cleanly to cloud deployment.
+- Logging captures request context without modern redaction, detection, or incident-response ownership.
+- Health, readiness, rollback, and deployment ownership are not visible in the legacy app.
+- API and UI behavior are documented indirectly through code, which increases regression risk during modernization.
+
+---
+
 ## 1. Application Inventory
 
 ### 1.1 Technology Stack
